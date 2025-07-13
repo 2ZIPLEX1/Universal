@@ -38,8 +38,46 @@ def get_tinkoff_checks_keyboard():
         [InlineKeyboardButton("🟡 Отправка на карту", callback_data="tinkoff_send_card")],
         [InlineKeyboardButton("🟡 Отправка через СБП", callback_data="tinkoff_send_sbp")],
         [InlineKeyboardButton("🟡 История платежей", callback_data="tinkoff_history")],
-        [InlineKeyboardButton("🟡 Получение", callback_data="tinkoff_receive")],
         [InlineKeyboardButton("« Назад", callback_data="checks")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def get_alfabank_checks_keyboard():
+    """Возвращает клавиатуру выбора типа чека Альфа-Банка"""
+    keyboard = [
+        [InlineKeyboardButton("🅰️ Баланс (главная)", callback_data="alfabank_balance_main")],
+        [InlineKeyboardButton("🅰️ Баланс(Платежный счет)", callback_data="alfabank_balance_account")],
+        [InlineKeyboardButton("🅰️ Отправка на карту", callback_data="alfabank_send_card")],
+        [InlineKeyboardButton("🅰️ Отправка через СБП", callback_data="alfabank_send_sbp")],
+        [InlineKeyboardButton("« Назад", callback_data="checks")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def get_sberbank_checks_keyboard():
+    """Возвращает клавиатуру выбора типа чека Сбербанка"""
+    keyboard = [
+        [InlineKeyboardButton("🟢 Баланс (Главная)", callback_data="sberbank_balance_main")],
+        [InlineKeyboardButton("🟢 Баланс (Карта)", callback_data="sberbank_balance_card")],
+        [InlineKeyboardButton("🟢 Баланс (платежный счет)", callback_data="sberbank_balance_account")],
+        [InlineKeyboardButton("🟢 Перевод выполнен", callback_data="sberbank_transfer_done")],
+        [InlineKeyboardButton("🟢 Перевод отправлен (СБП)", callback_data="sberbank_transfer_sbp")],
+        [InlineKeyboardButton("🟢 Перевод доставлен", callback_data="sberbank_transfer_delivered")],
+        [InlineKeyboardButton("« Назад", callback_data="checks")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def get_bank_selection_keyboard(action_type):
+    """Возвращает клавиатуру выбора банка для переводов"""
+    keyboard = [
+        [InlineKeyboardButton("На Альфа-банк", callback_data=f"{action_type}_to_alfabank")],
+        [InlineKeyboardButton("На Т-банк", callback_data=f"{action_type}_to_tinkoff")],
+        [InlineKeyboardButton("На ВТБ", callback_data=f"{action_type}_to_vtb")],
+        [InlineKeyboardButton("На Сбербанк", callback_data=f"{action_type}_to_sberbank")],
+        [InlineKeyboardButton("На Райффайзен", callback_data=f"{action_type}_to_raiffeisen")],
+        [InlineKeyboardButton("На Ozon банк", callback_data=f"{action_type}_to_ozon")],
+        [InlineKeyboardButton("На МТС банк", callback_data=f"{action_type}_to_mts")],
+        [InlineKeyboardButton("На YooMoney", callback_data=f"{action_type}_to_yoomoney")],
+        [InlineKeyboardButton("« Назад", callback_data="back_to_bank_menu")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -66,56 +104,6 @@ def get_sberbank_receipts_keyboard():
         [InlineKeyboardButton("🧾 Чек операции СБП", callback_data="sberbank_receipt_sbp")],
         [InlineKeyboardButton("🧾 Чек операции (на карту)", callback_data="sberbank_receipt_card")],
         [InlineKeyboardButton("« Назад", callback_data="receipts")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-def get_alfabank_checks_keyboard():
-    """Возвращает клавиатуру выбора типа чека Альфа-Банка"""
-    keyboard = [
-        [InlineKeyboardButton("🅰️ Баланс", callback_data="alfabank_balance")],
-        [InlineKeyboardButton("🅰️ Перевод", callback_data="alfabank_transfer")],
-        [InlineKeyboardButton("🅰️ История", callback_data="alfabank_history")],
-        [InlineKeyboardButton("« Назад", callback_data="checks")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-def get_binance_checks_keyboard():
-    """Возвращает клавиатуру выбора типа чека Binance"""
-    keyboard = [
-        [InlineKeyboardButton("🔶 Баланс", callback_data="binance_balance")],
-        [InlineKeyboardButton("🔶 Перевод", callback_data="binance_transfer")],
-        [InlineKeyboardButton("🔶 История", callback_data="binance_history")],
-        [InlineKeyboardButton("« Назад", callback_data="checks")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-def get_sberbank_checks_keyboard():
-    """Возвращает клавиатуру выбора типа чека Сбербанка"""
-    keyboard = [
-        [InlineKeyboardButton("🟢 Баланс", callback_data="sberbank_balance")],
-        [InlineKeyboardButton("🟢 Перевод", callback_data="sberbank_transfer")],
-        [InlineKeyboardButton("🟢 История", callback_data="sberbank_history")],
-        [InlineKeyboardButton("« Назад", callback_data="checks")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-def get_kaspi_checks_keyboard():
-    """Возвращает клавиатуру выбора типа чека Каспи"""
-    keyboard = [
-        [InlineKeyboardButton("🍁 Баланс", callback_data="kaspi_balance")],
-        [InlineKeyboardButton("🍁 Перевод", callback_data="kaspi_transfer")],
-        [InlineKeyboardButton("🍁 История", callback_data="kaspi_history")],
-        [InlineKeyboardButton("« Назад", callback_data="checks")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-def get_vtb_checks_keyboard():
-    """Возвращает клавиатуру выбора типа чека ВТБ"""
-    keyboard = [
-        [InlineKeyboardButton("🔵 Баланс", callback_data="vtb_balance")],
-        [InlineKeyboardButton("🔵 Перевод", callback_data="vtb_transfer")],
-        [InlineKeyboardButton("🔵 История", callback_data="vtb_history")],
-        [InlineKeyboardButton("« Назад", callback_data="checks")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -178,13 +166,5 @@ def get_payment_method_keyboard():
         [InlineKeyboardButton("💳 Банковская карта", callback_data="pay_card")],
         [InlineKeyboardButton("📱 Криптовалюта", callback_data="pay_crypto")],
         [InlineKeyboardButton("« Назад", callback_data="balance")]
-    ]
-    return InlineKeyboardMarkup(keyboard)
-def get_tinkoff_receipts_keyboard():
-    """Возвращает клавиатуру выбора типа квитанции Тинькофф"""
-    keyboard = [
-        [InlineKeyboardButton("💳 По номеру карты", callback_data="tinkoff_receipt_card")],
-        [InlineKeyboardButton("📱 По номеру телефона", callback_data="tinkoff_receipt_phone")],
-        [InlineKeyboardButton("« Назад", callback_data="receipts")]
     ]
     return InlineKeyboardMarkup(keyboard)

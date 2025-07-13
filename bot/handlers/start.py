@@ -38,57 +38,40 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         is_subscribed = await check_subscription(context.bot, user.id, CHANNEL_ID)
     
     if not is_subscribed:
-        # Пользователь не подписан на канал - отправляем изображение с инструкцией подписки
+        # Пользователь не подписан на канал - отправляем GIF с инструкцией подписки
         try:
-            # Проверяем наличие изображения
-            photo_path = "static/images/not_subscribed.jpg"
-            if os.path.exists(photo_path):
-                await update.message.reply_photo(
-                    photo=open(photo_path, 'rb'),
-                    caption=f"🛑 Привет! Чтобы начать пользоваться нашим ботом, нужно подписаться на [наш канал]({CHANNEL_URL}). \n\n⚡️ Подписался? Напиши боту команду /start или любое сообщение в чат!",
-                    parse_mode="Markdown"
-                )
-            else:
-                # Если изображения нет, отправляем только текст
-                await update.message.reply_text(
-                    f"🛑 Привет! Чтобы начать пользоваться нашим ботом, нужно подписаться на [наш канал]({CHANNEL_URL}). \n\n⚡️ Подписался? Напиши боту команду /start или любое сообщение в чат!",
-                    parse_mode="Markdown"
-                )
+            await update.message.reply_animation(
+                animation="https://usagif.com/wp-content/uploads/gifs/starfall-gif-27.gif",
+                caption=f"🛑 Привет! Чтобы начать пользоваться нашим ботом, нужно подписаться на [наш канал]({CHANNEL_URL}). \n\n⚡️ Подписался? Напиши боту команду /start или любое сообщение в чат!",
+                parse_mode="Markdown"
+            )
         except Exception as e:
-            logger.error(f"Ошибка при отправке изображения: {e}")
+            logger.error(f"Ошибка при отправке GIF: {e}")
+            # В случае ошибки отправляем только текст
             await update.message.reply_text(
                 f"🛑 Привет! Чтобы начать пользоваться нашим ботом, нужно подписаться на [наш канал]({CHANNEL_URL}). \n\n⚡️ Подписался? Напиши боту команду /start или любое сообщение в чат!",
                 parse_mode="Markdown"
             )
     else:
-        # Пользователь подписан на канал - отправляем эмодзи, гиф и главное меню
+        # Пользователь подписан на канал - отправляем эмодзи, затем GIF с клавиатурой
         # Сначала отправляем эмодзи отдельным сообщением
         await update.message.reply_text("💫")
         
-        # Затем отправляем GIF и главное меню с обычной клавиатурой
+        # Затем отправляем GIF с приветствием и клавиатурой в одном сообщении
         try:
             await update.message.reply_animation(
                 animation="https://media1.tenor.com/m/5hCo-bxm3mUAAAAC/gojo-gojo-annoyed.gif",
                 caption="Привет, добро пожаловать в нашего бота\n\nВ нашем боте ты можешь создать точную копию скриншотов переводов, чеков по операциям, истории переводов и покупок! Используй нашего бота только для розыгрышей и в личных целях, ответственность за все действия несешь только ты.\n\n📑 Инструкция и описание боты\n📖 Пользовательское соглашение",
+                reply_markup=get_main_keyboard(),
                 parse_mode="Markdown"
             )
-            
-            # Отправляем обычную клавиатуру отдельным сообщением без текста "Выберите действие:"
-            await update.message.reply_text(
-                reply_markup=get_main_keyboard()
-            )
-            
         except Exception as e:
             logger.error(f"Ошибка при отправке GIF: {e}")
             # В случае ошибки отправляем только текст с клавиатурой
             await update.message.reply_text(
                 "Привет, добро пожаловать в нашего бота\n\nВ нашем боте ты можешь создать точную копию скриншотов переводов, чеков по операциям, истории переводов и покупок! Используй нашего бота только для розыгрышей и в личных целях, ответственность за все действия несешь только ты.\n\n📑 Инструкция и описание боты\n📖 Пользовательское соглашение",
+                reply_markup=get_main_keyboard(),
                 parse_mode="Markdown"
-            )
-            
-            # Отправляем обычную клавиатуру отдельным сообщением без текста "Выберите действие:"
-            await update.message.reply_text(
-                reply_markup=get_main_keyboard()
             )
 
 async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -110,7 +93,56 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Если пользователь в режиме ввода данных, обрабатываем их
     user_state = context.user_data.get("state", None)
     
-    if user_state == "waiting_tinkoff_balance_data":
+    # Тинькофф обработчики
+    if user_state == "waiting_tinkoff_balance_main_data":
+        from bot.handlers import checks
+        await checks.process_tinkoff_balance_main_data(update, context)
+    elif user_state == "waiting_tinkoff_balance_card_data":
+        from bot.handlers import checks
+        await checks.process_tinkoff_balance_card_data(update, context)
+    elif user_state == "waiting_tinkoff_send_card_data":
+        from bot.handlers import checks
+        await checks.process_tinkoff_send_card_data(update, context)
+    elif user_state == "waiting_tinkoff_send_sbp_data":
+        from bot.handlers import checks
+        await checks.process_tinkoff_send_sbp_data(update, context)
+    elif user_state == "waiting_tinkoff_history_data":
+        from bot.handlers import checks
+        await checks.process_tinkoff_history_data(update, context)
+    # Альфа-банк обработчики
+    elif user_state == "waiting_alfabank_balance_main_data":
+        from bot.handlers import checks
+        await checks.process_alfabank_balance_main_data(update, context)
+    elif user_state == "waiting_alfabank_balance_account_data":
+        from bot.handlers import checks
+        await checks.process_alfabank_balance_account_data(update, context)
+    elif user_state == "waiting_alfabank_send_card_data":
+        from bot.handlers import checks
+        await checks.process_alfabank_send_card_data(update, context)
+    elif user_state == "waiting_alfabank_send_sbp_data":
+        from bot.handlers import checks
+        await checks.process_alfabank_send_sbp_data(update, context)
+    # Сбербанк обработчики
+    elif user_state == "waiting_sberbank_balance_main_data":
+        from bot.handlers import checks
+        await checks.process_sberbank_balance_main_data(update, context)
+    elif user_state == "waiting_sberbank_balance_card_data":
+        from bot.handlers import checks
+        await checks.process_sberbank_balance_card_data(update, context)
+    elif user_state == "waiting_sberbank_balance_account_data":
+        from bot.handlers import checks
+        await checks.process_sberbank_balance_account_data(update, context)
+    elif user_state == "waiting_sberbank_transfer_done_data":
+        from bot.handlers import checks
+        await checks.process_sberbank_transfer_done_data(update, context)
+    elif user_state == "waiting_sberbank_transfer_sbp_data":
+        from bot.handlers import checks
+        await checks.process_sberbank_transfer_sbp_data(update, context)
+    elif user_state == "waiting_sberbank_transfer_delivered_data":
+        from bot.handlers import checks
+        await checks.process_sberbank_transfer_delivered_data(update, context)
+    # Старые обработчики (для совместимости)
+    elif user_state == "waiting_tinkoff_balance_data":
         from bot.handlers import checks
         await checks.process_tinkoff_balance_data(update, context)
     elif user_state == "waiting_tinkoff_card_receipt_data":
@@ -140,16 +172,25 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             from bot.handlers import receipts
             await receipts.receipts_menu(update, context)
         elif message_text == "💼 Баланс":
-            from bot.handlers import balance
-            await balance.balance_menu(update, context)
+            # Временно закомментировано до исправления модуля balance
+            await update.message.reply_text(
+                "💼 Баланс - функция временно недоступна",
+                reply_markup=get_main_keyboard()
+            )
         elif message_text == "ℹ️ Инфо":
-            from bot.handlers import info
-            await info.info_menu(update, context)
+            # Временно закомментировано до исправления модуля info
+            await update.message.reply_text(
+                "ℹ️ Инфо - функция временно недоступна", 
+                reply_markup=get_main_keyboard()
+            )
         elif message_text == "🆘 Поддержка":
             await support_handler(update, context)
         elif message_text == "💰 Создать своего бота":
-            from bot.handlers import bot_creation
-            await bot_creation.bot_creation_menu(update, context)
+            # Временно закомментировано до исправления модуля bot_creation
+            await update.message.reply_text(
+                "💰 Создать своего бота - функция временно недоступна",
+                reply_markup=get_main_keyboard()
+            )
         else:
             # Если нет активного состояния и не распознана команда, отправляем главное меню
             await update.message.reply_text(
@@ -196,6 +237,7 @@ async def support_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             ]),
             parse_mode="Markdown"
         )
+
 async def back_to_main(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Возврат в главное меню"""
     query = update.callback_query

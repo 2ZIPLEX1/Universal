@@ -16,49 +16,33 @@ logger = logging.getLogger(__name__)
 
 async def receipts_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Меню выбора банка для квитанций"""
+    # Очищаем состояние пользователя при переходе в меню
+    if "state" in context.user_data:
+        del context.user_data["state"]
+    
     # Проверяем, откуда вызвана функция: из callback или из текстового сообщения
     if update.callback_query:
-        # Вызвана из callback
+        # Вызвана из callback - заменяем caption медиа-сообщения
         query = update.callback_query
         await query.answer()
         
-        # Редактируем текущее сообщение
-        try:
-            await query.edit_message_text(
-                text="💫 Выбери какую квитанцию хочешь создать:",
-                reply_markup=get_bank_keyboard("receipt"),
-                parse_mode="Markdown"
-            )
-        except Exception as e:
-            logger.error(f"Ошибка при редактировании сообщения: {e}")
-            # Если не удалось отредактировать, отправляем новое сообщение
-            await query.message.reply_text(
-                "💫 Выбери какую квитанцию хочешь создать:",
-                reply_markup=get_bank_keyboard("receipt"),
-                parse_mode="Markdown"
-            )
+        await query.edit_message_caption(
+            caption="💫 Выбери какую квитанцию хочешь создать:",
+            reply_markup=get_bank_keyboard("receipt"),
+            parse_mode="Markdown"
+        )
     else:
-        # Вызвана из текстового сообщения
-        # Отправляем новое сообщение с картинкой
+        # Вызвана из текстового сообщения - отправляем GIF + текст + кнопки в одном сообщении
         try:
-            # Проверяем наличие изображения
-            photo_path = "static/images/receipts.jpg"
-            if os.path.exists(photo_path):
-                await update.message.reply_photo(
-                    photo=open(photo_path, 'rb'),
-                    caption="💫 Выбери какую квитанцию хочешь создать:",
-                    reply_markup=get_bank_keyboard("receipt"),
-                    parse_mode="Markdown"
-                )
-            else:
-                # Если изображения нет, отправляем только текст
-                await update.message.reply_text(
-                    "💫 Выбери какую квитанцию хочешь создать:",
-                    reply_markup=get_bank_keyboard("receipt"),
-                    parse_mode="Markdown"
-                )
+            await update.message.reply_animation(
+                animation="https://usagif.com/wp-content/uploads/gifs/starfall-gif-27.gif",
+                caption="💫 Выбери какую квитанцию хочешь создать:",
+                reply_markup=get_bank_keyboard("receipt"),
+                parse_mode="Markdown"
+            )
         except Exception as e:
-            logger.error(f"Ошибка при отправке сообщения: {e}")
+            logger.error(f"Ошибка при отправке GIF: {e}")
+            # В случае ошибки отправляем только текст с меню
             await update.message.reply_text(
                 "💫 Выбери какую квитанцию хочешь создать:",
                 reply_markup=get_bank_keyboard("receipt"),
@@ -70,9 +54,13 @@ async def tinkoff_receipts(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     query = update.callback_query
     await query.answer()
     
-    # Редактируем текущее сообщение
-    await query.edit_message_text(
-        text="🧾 Тинькофф - выбери тип перевода в квитанции:",
+    # Очищаем состояние пользователя
+    if "state" in context.user_data:
+        del context.user_data["state"]
+    
+    # Заменяем caption медиа-сообщения
+    await query.edit_message_caption(
+        caption="🧾 Тинькофф - выбери тип перевода в квитанции:",
         reply_markup=get_tinkoff_receipts_keyboard(),
         parse_mode="Markdown"
     )
@@ -90,15 +78,15 @@ async def process_tinkoff_card_receipt_data(update: Update, context: ContextType
     
     # Создаем словарь с данными
     variables = {
-        "amount": data[0],
+        "transfer_amount": data[0],
         "commission": data[1],
-        "status": data[2],
-        "sender": data[3],
-        "recipient": data[4],
-        "recipientCard": data[5],
-        "recipientBank": data[6],
-        "operationDate": data[7],
-        "receiptNumber": data[8] if len(data) > 8 else "1-5-8-774-943-483"
+        "recipient_card": data[2],
+        "recipient_bank": data[3],
+        "recipient_name": data[4],
+        "sender_name": data[5],
+        "status": data[6],
+        "date_time": data[7],
+        "receipt_number": data[8] if len(data) > 8 else "1-23-456-789-123"
     }
     
     # Генерируем квитанцию
@@ -114,7 +102,7 @@ async def process_tinkoff_card_receipt_data(update: Update, context: ContextType
         # Отправляем квитанцию
         await update.message.reply_document(
             document=io.BytesIO(pdf_bytes),
-            filename="tinkoff_receipt.pdf",
+            filename="tinkoff_receipt_card.pdf",
             caption="✅ Готово! Вот ваша квитанция Тинькофф по карте."
         )
     except Exception as e:
@@ -165,8 +153,12 @@ async def kaspi_receipts(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     query = update.callback_query
     await query.answer()
     
-    await query.edit_message_text(
-        text="🍁 Каспи - выбери тип перевода в квитанции:",
+    # Очищаем состояние пользователя
+    if "state" in context.user_data:
+        del context.user_data["state"]
+    
+    await query.edit_message_caption(
+        caption="🍁 Каспи - выбери тип перевода в квитанции:",
         reply_markup=get_kaspi_receipts_keyboard(),
         parse_mode="Markdown"
     )
@@ -176,8 +168,12 @@ async def vtb_receipts(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     query = update.callback_query
     await query.answer()
     
-    await query.edit_message_text(
-        text="🔵 ВТБ - выбери тип перевода в квитанции:",
+    # Очищаем состояние пользователя
+    if "state" in context.user_data:
+        del context.user_data["state"]
+    
+    await query.edit_message_caption(
+        caption="🔵 ВТБ - выбери тип перевода в квитанции:",
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("« Назад", callback_data="receipts")]]),
         parse_mode="Markdown"
     )
@@ -187,11 +183,16 @@ async def sberbank_receipts(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     query = update.callback_query
     await query.answer()
     
-    await query.edit_message_text(
-        text="🟢 Сбербанк - выбери тип перевода в квитанции:",
+    # Очищаем состояние пользователя
+    if "state" in context.user_data:
+        del context.user_data["state"]
+    
+    await query.edit_message_caption(
+        caption="🟢 Сбербанк - выбери тип перевода в квитанции:",
         reply_markup=get_sberbank_receipts_keyboard(),
         parse_mode="Markdown"
     )
+
 # Добавьте новый обработчик для квитанции по карте
 async def tinkoff_receipt_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик для квитанции Тинькофф по карте"""
@@ -201,8 +202,8 @@ async def tinkoff_receipt_card(update: Update, context: ContextTypes.DEFAULT_TYP
     # Устанавливаем состояние ожидания данных
     context.user_data["state"] = "waiting_tinkoff_card_receipt_data"
     
-    await query.edit_message_text(
-        text="""🧾 Т-Банк → отправь данные по инструкции:
+    await query.edit_message_caption(
+        caption="""🧾 Т-Банк → отправь данные по инструкции:
 
 1️⃣ Сумма перевода
 2️⃣ Сумма комиссии
@@ -228,53 +229,3 @@ async def tinkoff_receipt_card(update: Update, context: ContextTypes.DEFAULT_TYP
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("« Назад", callback_data="receipt_tinkoff")]]),
         parse_mode="Markdown"
     )
-
-# Обновите обработчик данных квитанции по карте
-async def process_tinkoff_card_receipt_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обработка введенных данных для квитанции Тинькофф по карте"""
-    # Разбираем введенные данные
-    data = update.message.text.strip().split('\n')
-    
-    if len(data) < 8:
-        await update.message.reply_text(
-            "❌ Недостаточно данных. Пожалуйста, введите все необходимые данные согласно инструкции."
-        )
-        return
-    
-    # Создаем словарь с данными
-    variables = {
-        "transfer_amount": data[0],
-        "commission": data[1],
-        "recipient_card": data[2],
-        "recipient_bank": data[3],
-        "recipient_name": data[4],
-        "sender_name": data[5],
-        "status": data[6],
-        "date_time": data[7],
-        "receipt_number": data[8] if len(data) > 8 else "1-23-456-789-123"
-    }
-    
-    # Генерируем квитанцию
-    try:
-        generator = TinkoffReceiptGenerator()
-        pdf_bytes = await generator.generate_card_receipt(variables)
-        
-        # Сохраняем в статистику
-        user_id = update.effective_user.id
-        Transaction.create(user_id, "receipt", -150, "Tinkoff card receipt")
-        Stats.increment("receipt")
-        
-        # Отправляем квитанцию
-        await update.message.reply_document(
-            document=io.BytesIO(pdf_bytes),
-            filename="tinkoff_receipt_card.pdf",
-            caption="✅ Готово! Вот ваша квитанция Тинькофф по карте."
-        )
-    except Exception as e:
-        await update.message.reply_text(
-            f"❌ Произошла ошибка при генерации квитанции: {str(e)}"
-        )
-    
-    # Очищаем состояние
-    if "state" in context.user_data:
-        del context.user_data["state"]
